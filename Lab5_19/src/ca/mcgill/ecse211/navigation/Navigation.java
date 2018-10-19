@@ -9,13 +9,11 @@ import lejos.robotics.SampleProvider;
 import ca.mcgill.ecse211.odometer.*;
 import lejos.hardware.Button;
 
-public class Navigation implements Runnable {
+public class Navigation implements Runnable{
 
 	private EV3LargeRegulatedMotor leftMotor;
 	private EV3LargeRegulatedMotor rightMotor;
-	private static final Port usPort = LocalEV3.get().getPort("S1");
-	private float[] usData;
-	private SampleProvider usDistance ;
+
 	private double TRACK = 9.8;
 	private double WHEEL_RAD = 2.2;
 	public static final int FORWARD_SPEED = 250;
@@ -26,14 +24,14 @@ public class Navigation implements Runnable {
 	int iterator = 0;
 	private Odometer odometer;
 	private OdometerData odoData;
-	private double[][]  wayPoints = new double[][]{{0*30.48,2*30.48}, // change values for different maps
-		{1*30.48,1*30.48},
-		{2*30.48,2*30.48},
-		{2*30.48,1*30.48},
-		{1*30.48,0*30.48}};
+	private float[] data;
+	private SampleProvider sample;
+	private int[] startPos;
+	private int[] endPos;
+	
 		//array list for points
 		public Navigation(EV3LargeRegulatedMotor leftMotor, EV3LargeRegulatedMotor rightMotor,
-				final double TRACK, final double WHEEL_RAD) throws OdometerExceptions { // constructor
+				final double TRACK, final double WHEEL_RAD, SampleProvider sample, float[] data, int[] startPos, int[] endPos ) throws OdometerExceptions { // constructor
 			this.odometer = Odometer.getOdometer();
 			this.leftMotor = leftMotor;
 			this.rightMotor = rightMotor;
@@ -41,11 +39,11 @@ public class Navigation implements Runnable {
 			odoData.setXYT(0 , 0 , 0);
 			this.TRACK = TRACK;
 			this.WHEEL_RAD = WHEEL_RAD;
-			SensorModes usSensor = new EV3UltrasonicSensor(usPort); // usSensor is the instance
-			usDistance = usSensor.getMode("Distance"); // usDistance provides samples from
-			// this instance
-			this.usData = new float[usDistance.sampleSize()]; // usData is the buffer in which data are
-			// returned
+			this.sample = sample;
+			this.data = data;
+			this.startPos = startPos;
+			this.endPos = endPos;
+			
 		}
 
 		// run method (required for Thread)
@@ -61,17 +59,15 @@ public class Navigation implements Runnable {
 				// there is nothing to be done here because it is not expected that
 				// the odometer will be interrupted by another thread
 			}
-			// implemented this for loop so that navigation will work for any number of points
-			while(iterator < wayPoints.length) { //iterate through all the points 
-				travelTo(wayPoints[iterator][0], wayPoints[iterator][1]);
-				iterator++;
-			}
+			//search
+			
 		}
 
-		void travelTo(double x, double y) {
-			currentX = odometer.getXYT()[0];// get the position on the board
-			currentY = odometer.getXYT()[1];
-			currentT = odometer.getXYT()[2];
+		public void travelTo(double x, double y) {
+			double [] position = odometer.getXYT(); // get the position on the board
+			currentX = position[0];	
+			currentY = position[1];
+			currentT = position[2];
 
 			dx = x- currentX;
 			dy = y - currentY;
@@ -98,8 +94,8 @@ public class Navigation implements Runnable {
 			rightMotor.rotate(convertDistance(WHEEL_RAD, distanceToTravel), true);
 
 			while(isNavigating()) { //avoiding the obstacles
-				usDistance.fetchSample(usData,0);
-				float distance = usData[0]*100;
+				sample.fetchSample(data,0);
+				float distance = data[0]*100;
 				if(distance<= 15) {
 					if(odometer.getXYT()[0]<2.4*30.48&&odometer.getXYT()[0]>1.3*30.48&&odometer.getXYT()[1]<2.5*30.48&&odometer.getXYT()[1]>1.6*30.48){
 						leftMotor.rotate(-convertAngle(WHEEL_RAD, TRACK, 90), true);  // turn when facing obstacle and travel a certain distance and then turn again 

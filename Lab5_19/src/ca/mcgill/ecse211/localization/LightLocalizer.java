@@ -1,24 +1,20 @@
 package ca.mcgill.ecse211.localization;
 
-import lejos.hardware.Sound;
 import lejos.hardware.motor.EV3LargeRegulatedMotor;
-import lejos.hardware.sensor.EV3ColorSensor;
 import lejos.robotics.SampleProvider;
 import ca.mcgill.ecse211.odometer.*;
-import lejos.hardware.ev3.LocalEV3;
-import lejos.hardware.sensor.EV3ColorSensor;
-import lejos.robotics.SampleProvider;
+
 
 /***
- * This class implements the light loclization in Lab4 on the EV3 platform.
+ * This class implements the light localization in Lab4 on the EV3 platform.
  * 
  * @authorAbedAtassi
  * @authorHyunSuAn
  */
 public class LightLocalizer implements Runnable {
 
-	private SampleProvider color_sample_provider;
-	private float[] color_samples;
+	private SampleProvider sampleProvider;
+	private float[] data;
 	private float light_value;
 	private EV3LargeRegulatedMotor leftMotor;
 	private EV3LargeRegulatedMotor rightMotor;
@@ -35,12 +31,11 @@ public class LightLocalizer implements Runnable {
 	 *            rightMotor, TRACK, WHEEL_RAD
 	 */
 	public LightLocalizer(EV3LargeRegulatedMotor leftMotor, EV3LargeRegulatedMotor rightMotor, double TRACK,
-			double WHEEL_RAD) {
+			double WHEEL_RAD, SampleProvider sample, float[] data) {
 		this.leftMotor = leftMotor;
 		this.rightMotor = rightMotor;
-		EV3ColorSensor colour_sensor = new EV3ColorSensor(LocalEV3.get().getPort("S2"));
-		color_sample_provider = colour_sensor.getMode("RGB");
-		color_samples = new float[colour_sensor.sampleSize()];
+		this.sampleProvider = sample;
+		this.data = data;
 		this.TRACK = TRACK;
 		this.WHEEL_RAD = WHEEL_RAD;
 	}
@@ -117,8 +112,8 @@ public class LightLocalizer implements Runnable {
 	 * 
 	 */
 	public void fetchUSData() {
-		color_sample_provider.fetchSample(color_samples, 0);
-		this.light_value = color_samples[0];
+		sampleProvider.fetchSample(data, 0);
+		this.light_value = data[0];
 		
 	}
 

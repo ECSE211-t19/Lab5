@@ -25,12 +25,14 @@ public class UltrasonicLocalizer implements Runnable {
 	public static final int WALL_DISTANCE = 40;
 	public static int ROTATION_SPEED = 100;
 	private EV3LargeRegulatedMotor leftMotor, rightMotor;
-	private SampleProvider usSensor;
+	private SampleProvider sampleProvider;
 	private Odometer odometer;
-	private float[] usData;
+	private float[] data;
 
 	private int distance = 0;
 	private int filter_control = 0;
+	private static double TRACK;
+	private static double WHEEL_RAD;
 
 	/***
 	 * Constructor
@@ -40,27 +42,23 @@ public class UltrasonicLocalizer implements Runnable {
 	 *            rightMotor, TRACK, WHEEL_RAD.
 	 */
 	public UltrasonicLocalizer(EV3LargeRegulatedMotor leftMotor, EV3LargeRegulatedMotor rightMotor, double TRACK,
-			double WHEEL_RAD) throws OdometerExceptions {
-		odometer = Odometer.getOdometer(leftMotor, rightMotor, TRACK, WHEEL_RAD);
-		SensorModes us_sensor = new EV3UltrasonicSensor(LocalEV3.get().getPort("S1"));
-		this.usSensor = us_sensor.getMode("Distance");
-		this.usData = new float[usSensor.sampleSize()];
+			double WHEEL_RAD, SampleProvider sample, float[] data) throws OdometerExceptions {
+		//odometer
+		odometer = Odometer.getOdometer();
+		//for sensor
+		this.sampleProvider = sample;
+		this.data = new float[sampleProvider.sampleSize()];
+		//motors
 		this.leftMotor = leftMotor;
 		this.rightMotor = rightMotor;
+		//constants
+		this.TRACK =TRACK;
+		this.WHEEL_RAD = WHEEL_RAD;
 	}
 
 	public void run() {
 
-		try {
-			Thread.sleep(2000);
-		} catch (InterruptedException e) {
-		}
-		if (Localization.edge) {
-			doFallingEdge();
-		} else if (!Localization.edge) {
-			doRisingEdge();
-		}
-
+		//pick an edge 
 	}
 
 	/*** This method starts the falling edge localization
@@ -155,8 +153,8 @@ public class UltrasonicLocalizer implements Runnable {
 
 			angle = odometer.getXYT()[2];
 		}
-		leftMotor.rotate(-convertAngle(Localization.WHEEL_RAD, Localization.TRACK, 49 + angle / 2.0), true);
-		rightMotor.rotate(convertAngle(Localization.WHEEL_RAD, Localization.TRACK, 49 + angle / 2.0), false);
+		leftMotor.rotate(-convertAngle(WHEEL_RAD, TRACK, 49 + angle / 2.0), true);
+		rightMotor.rotate(convertAngle(WHEEL_RAD, TRACK, 49 + angle / 2.0), false);
 		odometer.setTheta(0);
 		leftMotor.stop(true);
 		rightMotor.stop();
@@ -256,8 +254,8 @@ public class UltrasonicLocalizer implements Runnable {
 
 			angle = odometer.getXYT()[2]; //get current angle
 		} // make the robot parallel to the y axis
-		leftMotor.rotate(convertAngle(Localization.WHEEL_RAD, Localization.TRACK, 135 - angle / 2.0), true);
-		rightMotor.rotate(-convertAngle(Localization.WHEEL_RAD, Localization.TRACK, 135 - angle / 2.0), false);
+		leftMotor.rotate(convertAngle(WHEEL_RAD, TRACK, 135 - angle / 2.0), true);
+		rightMotor.rotate(-convertAngle(WHEEL_RAD,TRACK, 135 - angle / 2.0), false);
 
 		leftMotor.stop(true);
 		rightMotor.stop(false);
@@ -266,8 +264,8 @@ public class UltrasonicLocalizer implements Runnable {
 	}
 
 	private void fetchUSData() {
-		usSensor.fetchSample(usData, 0); // acquire data
-		int new_distance = (int) Math.abs(usData[0] * 100.0); // extract from buffer, cast to int
+		sampleProvider.fetchSample(data, 0); // acquire data
+		int new_distance = (int) Math.abs(data[0] * 100.0); // extract from buffer, cast to int
 		// rudimentary filter - toss out invalid samples corresponding to null
 		// signal.
 		if (new_distance >= 255 && filter_control < FILTER_OUT) {
