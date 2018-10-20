@@ -1,7 +1,6 @@
 package ca.mcgill.ecse211.odometer;
 
 import java.text.DecimalFormat;
-import ca.mcgill.ecse211.navigation.UltrasonicController;
 import lejos.hardware.lcd.TextLCD;
 
 /**
