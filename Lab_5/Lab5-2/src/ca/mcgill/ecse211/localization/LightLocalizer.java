@@ -4,11 +4,10 @@ import lejos.hardware.Sound;
 import lejos.hardware.motor.EV3LargeRegulatedMotor;
 import lejos.hardware.sensor.EV3ColorSensor;
 import lejos.robotics.SampleProvider;
-import ca.mcgill.ecse211.navigation.Lab5;
+import ca.mcgill.ecse211.navigation.*;
 import ca.mcgill.ecse211.odometer.*;
 import lejos.hardware.ev3.LocalEV3;
-import lejos.hardware.sensor.EV3ColorSensor;
-import lejos.robotics.SampleProvider;
+
 
 /***
  * This class implements the light loclization in Lab4 on the EV3 platform.
@@ -24,10 +23,14 @@ public class LightLocalizer implements Runnable {
 	private EV3LargeRegulatedMotor leftMotor;
 	private EV3LargeRegulatedMotor rightMotor;
 	private static final int d = 12; // distance between the center of the robot and the light sensor
+	private static final double TILE_WIDTH = 30.48;
 	private double TRACK;
 	private double WHEEL_RAD;
 	private Odometer odoData;
-
+	private int startCorner;
+	private double dX;
+	private double dY;
+	
 	/***
 	 * Constructor
 	 * 
@@ -44,6 +47,7 @@ public class LightLocalizer implements Runnable {
 		color_samples = new float[colour_sensor.sampleSize()];
 		this.TRACK = TRACK;
 		this.WHEEL_RAD = WHEEL_RAD;
+		this.startCorner = startCorner;
 	}
 
 	public void run() {

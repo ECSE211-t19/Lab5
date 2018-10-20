@@ -8,34 +8,36 @@ import lejos.robotics.SampleProvider;
 
 import ca.mcgill.ecse211.odometer.*;
 import lejos.hardware.Button;
+import lejos.hardware.Sound;
 
 public class ObstacleAvoidance implements Runnable {
 
 	private EV3LargeRegulatedMotor leftMotor;
 	private EV3LargeRegulatedMotor rightMotor;
-	private static final Port usPort = LocalEV3.get().getPort("S1");
 	private float[] usData;
 	private SampleProvider usDistance ;
 	private final double TRACK;
 	private final double WHEEL_RAD;
 	public static final int FORWARD_SPEED = 250;
 	private static final int ROTATE_SPEED = 150;
+	private static final double TILE_WIDTH = 30.48;
 	double currentT, currentY, currentX;
 	double dx, dy, dt;
 	double distanceToTravel;
-	int iterator = 0;
+	int iterator = 1;
 	private Odometer odometer;
 	private OdometerData odoData;
-	private double[][]  wayPoints = new double[][]{{2*30.48,2*30.48}, // change values for different maps
-		  {2*30.48,6*30.48},
-		  {3*30.48,6*30.48},
-		  {3*30.48,2*30.48},
-		  {4*30.48,2*30.48},
-		  {4*30.48,6*30.48},
-		  {5*30.48,6*30.48},
-		  {5*30.48,2*30.48},
-		  {6*30.48,2*30.48},
-		  {6*30.48,6*30.48}};
+	private int startCorner = 0;
+	private double[][]  wayPoints = new double[][]{{2*TILE_WIDTH,2*TILE_WIDTH}, // change values for different maps
+		  {2*TILE_WIDTH,6*TILE_WIDTH},
+		  {3*TILE_WIDTH,6*TILE_WIDTH},
+		  {3*TILE_WIDTH,2*TILE_WIDTH},
+		  {4*TILE_WIDTH,2*TILE_WIDTH},
+		  {4*TILE_WIDTH,6*TILE_WIDTH},
+		  {5*TILE_WIDTH,6*TILE_WIDTH},
+		  {5*TILE_WIDTH,2*TILE_WIDTH},
+		  {6*TILE_WIDTH,2*TILE_WIDTH},
+		  {6*TILE_WIDTH,6*TILE_WIDTH}};
 		//array list for points
 		public ObstacleAvoidance(EV3LargeRegulatedMotor leftMotor, EV3LargeRegulatedMotor rightMotor,
 				final double TRACK, final double WHEEL_RAD) throws OdometerExceptions { // constructor
@@ -66,13 +68,63 @@ public class ObstacleAvoidance implements Runnable {
 				// there is nothing to be done here because it is not expected that
 				// the odometer will be interrupted by another thread
 			}
+			//get to start position
+			if(startCorner == 0) {
+				dx = wayPoints[0][0] - TILE_WIDTH;
+				turnTo(90);
+				travel(dx);
+				turnTo(-90);
+				dy = wayPoints[0][1] - TILE_WIDTH;
+				travel(dy);
+			}
+			//bottom right corner
+			else if(startCorner == 1) {
+				odometer.setX(6*TILE_WIDTH);
+				dx = odometer.getX() - wayPoints[0][0];
+				turnTo(-90);
+				travel(dx);
+				turnTo(90);
+				travel(wayPoints[0][1]);
+			}
+			//top right corner
+			else if(startCorner == 2) {
+				odometer.setXYT(6*TILE_WIDTH, 6*TILE_WIDTH, 180);
+				//drive one tile further down than the search area so no risk of hitting a ring
+				dy = odometer.getY() - wayPoints[0][1] + 1;
+				travel(dy);
+				//turn to left wall
+				turnTo(90);
+				dx = odometer.getX() - wayPoints[0][0];
+				travel(dx);
+				//turn to top wall and travel to start point
+				turnTo(90);
+				travel(TILE_WIDTH);
+			}
+			else {
+				odometer.setXYT(TILE_WIDTH, 6*TILE_WIDTH, 180);
+				dy = odometer.getY() - wayPoints[0][1];
+				turnTo(-90);
+				dx = wayPoints[0][0] - odometer.getX();
+				travel(dx);
+				turnTo(-90);
+			}
+			Sound.beep();
+			
 			// implemented this for loop so that navigation will work for any number of points
+			//already at point 0, so iterator starts at 1 
 			while(iterator < wayPoints.length) { //iterate through all the points 
 				travelTo(wayPoints[iterator][0], wayPoints[iterator][1]);
 				iterator++;
 			}
 		}
+		void travel(double distance) {
+			// drive forward required distance
+			leftMotor.setSpeed(FORWARD_SPEED);
+			rightMotor.setSpeed(FORWARD_SPEED);
+			leftMotor.rotate(convertDistance(WHEEL_RAD, distance), true);
+			rightMotor.rotate(convertDistance(WHEEL_RAD, distance), false);
 
+		}
 		void travelTo(double x, double y) {
 			currentX = odometer.getXYT()[0];// get the position on the board
 			currentY = odometer.getXYT()[1];
@@ -80,7 +132,7 @@ public class ObstacleAvoidance implements Runnable {
 
 			dx = x- currentX;
 			dy = y - currentY;
-			distanceToTravel = Math.sqrt(dx*dx+dy*dy);
+			distanceToTravel = Math.hypot(dx, dy);
 			if(dy>=0) {
 				dt=Math.atan(dx/dy);
 			}
@@ -113,7 +165,7 @@ public class ObstacleAvoidance implements Runnable {
 					rightMotor.stop();
 					// Detect color here
 					
-					if(odometer.getXYT()[0]<2.4*30.48&&odometer.getXYT()[0]>1.3*30.48&&odometer.getXYT()[1]<2.5*30.48&&odometer.getXYT()[1]>1.6*30.48){
+					if(odometer.getXYT()[0]<2.4*TILE_WIDTH&&odometer.getXYT()[0]>1.3*TILE_WIDTH&&odometer.getXYT()[1]<2.5*TILE_WIDTH&&odometer.getXYT()[1]>1.6*TILE_WIDTH){
 						leftMotor.rotate(-convertAngle(WHEEL_RAD, TRACK, 90), true);  // turn when facing obstacle and travel a certain distance and then turn again 
 						rightMotor.rotate(convertAngle(WHEEL_RAD, TRACK, 90), false);// then travel a certain distance
 						leftMotor.rotate(convertDistance(WHEEL_RAD, 20), true);

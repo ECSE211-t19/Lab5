@@ -5,6 +5,7 @@ import ca.mcgill.ecse211.localization.LightLocalizer;
 import ca.mcgill.ecse211.localization.UltrasonicLocalizer;
 import ca.mcgill.ecse211.odometer.*;
 import lejos.hardware.Button;
+import lejos.hardware.Sound;
 import lejos.hardware.ev3.LocalEV3;
 import lejos.hardware.lcd.TextLCD;
 import lejos.hardware.motor.EV3LargeRegulatedMotor;
@@ -42,17 +43,11 @@ public class Lab5 {
 
 		navigation navigation = new navigation(leftMotor, rightMotor, TRACK, WHEEL_RAD);
 		LightLocalizer lightLocalizer = new LightLocalizer(leftMotor, rightMotor, TRACK, WHEEL_RAD);
+		
 		ObstacleAvoidance obstacleavoidance = new ObstacleAvoidance(leftMotor, rightMotor, TRACK, WHEEL_RAD);
 		do {
 			// clear the display
 			lcd.clear();
-
-			// ask the user whether the motors should drive in a square or float
-			lcd.drawString("< Left  | Right >", 0, 0);
-			lcd.drawString("  No    | with   ", 0, 1);
-			lcd.drawString("  obs - | obs-   ", 0, 2);
-			lcd.drawString("  tacle | tacle  ", 0, 3);
-			lcd.drawString("        |        ", 0, 4);
 
 			buttonChoice = Button.waitForAnyPress();
 
@@ -71,6 +66,9 @@ public class Lab5 {
 				// usLocalizer.run();
 				// buttonChoice = Button.waitForAnyPress();
 				// lightLocalizer.run();
+				Sound.beep();
+				//go to start point
+				
 				obstacleavoidance.run(); // run the obstacleAvoidance
 			}
 		}

@@ -32,6 +32,7 @@ public class UltrasonicLocalizer implements Runnable {
 
 	private int distance = 0;
 	private int filter_control = 0;
+	
 
 	/***
 	 * Constructor
