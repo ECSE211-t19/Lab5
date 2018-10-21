@@ -26,7 +26,8 @@ public class Lab5 {
 	public static final EV3ColorSensor ringSensor = new EV3ColorSensor(LocalEV3.get().getPort("S3"));
 	private static final TextLCD lcd = LocalEV3.get().getTextLCD();
 	public static final double WHEEL_RAD = 2.2;
-	public static final double TRACK = 9.6;
+	public static final double TRACK = 10;
+	public Odometer odometer;
 
 	public static void main(String[] args) throws OdometerExceptions {
 
@@ -57,17 +58,15 @@ public class Lab5 {
 			Thread odoDisplayThread = new Thread(odometryDisplay);
 			odoDisplayThread.start();
 
-			if (buttonChoice == Button.ID_LEFT) {
-				navigation.run();
-			}
-
+				lcd.drawString("click to start", 0,0);
 			if (buttonChoice == Button.ID_RIGHT) {
-
-				// usLocalizer.run();
-				// buttonChoice = Button.waitForAnyPress();
-				// lightLocalizer.run();
+				
+				//usLocalizer.run();
+				//buttonChoice = Button.waitForAnyPress();
+				//lightLocalizer.run();
 				Sound.beep();
 				//go to start point
+				//buttonChoice = Button.waitForAnyPress();
 				
 				obstacleavoidance.run(); // run the obstacleAvoidance
 			}

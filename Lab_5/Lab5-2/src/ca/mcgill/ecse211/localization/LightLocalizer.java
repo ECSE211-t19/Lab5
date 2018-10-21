@@ -115,6 +115,10 @@ public class LightLocalizer implements Runnable {
 		leftMotor.stop(true);
 		rightMotor.stop(false);
 		odoData.setTheta(0); // Robot is at the origin
+		
+		double[] position = {TILE_WIDTH, TILE_WIDTH, 0};
+		boolean[] set = {true,true,true};
+		odoData.setPosition(position, set);
 	}
 
 	/***

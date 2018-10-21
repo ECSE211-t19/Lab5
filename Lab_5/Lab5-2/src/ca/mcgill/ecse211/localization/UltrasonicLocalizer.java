@@ -43,7 +43,7 @@ public class UltrasonicLocalizer implements Runnable {
 	 */
 	public UltrasonicLocalizer(EV3LargeRegulatedMotor leftMotor, EV3LargeRegulatedMotor rightMotor, double TRACK,
 			double WHEEL_RAD) throws OdometerExceptions {
-		odometer = Odometer.getOdometer(leftMotor, rightMotor, TRACK, WHEEL_RAD);
+		odometer = Odometer.getOdometer();
 		SensorModes us_sensor = Lab5.usSensor;
 		this.usSensor = us_sensor.getMode("Distance");
 		this.usData = new float[usSensor.sampleSize()];
@@ -157,114 +157,12 @@ public class UltrasonicLocalizer implements Runnable {
 		}
 		leftMotor.rotate(-convertAngle(Lab5.WHEEL_RAD, Lab5.TRACK, 49 + angle / 2.0), true);
 		rightMotor.rotate(convertAngle(Lab5.WHEEL_RAD, Lab5.TRACK, 49 + angle / 2.0), false);
-		odometer.setTheta(0);
+		odometer.setTheta(19);
 		leftMotor.stop(true);
 		rightMotor.stop();
 	}
 
-	/*** This method starts the falling edge localization
-	   * 
-	   * 
-	   * */
-	public void doRisingEdge() {
-		double angle;
-		for (int i = 0; i < 30; i++) {
-			fetchUSData();
-		} // facing out
-		if (this.distance > 35) {
-			while (this.distance > 35) {
-				leftMotor.setSpeed(ROTATION_SPEED);
-				rightMotor.setSpeed(ROTATION_SPEED);
-				leftMotor.backward();
-				rightMotor.forward();
-
-				fetchUSData();
-			}
-			leftMotor.stop(true);
-			rightMotor.stop();
-
-			while (this.distance < WALL_DISTANCE) {
-				leftMotor.setSpeed(ROTATION_SPEED);
-				rightMotor.setSpeed(ROTATION_SPEED);
-				leftMotor.backward();
-				rightMotor.forward();
-
-				fetchUSData();
-			}
-			leftMotor.stop(true);
-			rightMotor.stop(false);
-			odometer.setTheta(0);
-
-			while (this.distance > 35) {
-				leftMotor.setSpeed(ROTATION_SPEED);
-				rightMotor.setSpeed(ROTATION_SPEED);
-				leftMotor.forward();
-				rightMotor.backward();
-
-				fetchUSData();
-			}
-			leftMotor.stop(true);
-			rightMotor.stop();
-
-			while (this.distance < WALL_DISTANCE) {
-				leftMotor.setSpeed(ROTATION_SPEED);
-				rightMotor.setSpeed(ROTATION_SPEED);
-				leftMotor.forward();
-				rightMotor.backward();
-
-				fetchUSData();
-			}
-			leftMotor.stop(true);
-			rightMotor.stop(false);
-
-			angle = odometer.getXYT()[2];
-			// facing in
-		} else {
-			while (this.distance < WALL_DISTANCE) {
-				leftMotor.setSpeed(ROTATION_SPEED);
-				rightMotor.setSpeed(ROTATION_SPEED);
-				leftMotor.backward();
-				rightMotor.forward();
-
-				fetchUSData();
-			}
-			leftMotor.stop(true);
-			rightMotor.stop(false);
-			odometer.setTheta(0);
-
-			while (this.distance > 35) {
-				leftMotor.setSpeed(ROTATION_SPEED);
-				rightMotor.setSpeed(ROTATION_SPEED);
-				leftMotor.forward();
-				rightMotor.backward();
-
-				fetchUSData();
-			}
-			leftMotor.stop(true);
-			rightMotor.stop();
-
-			while (this.distance < WALL_DISTANCE) {
-				leftMotor.setSpeed(ROTATION_SPEED);
-				rightMotor.setSpeed(ROTATION_SPEED);
-				leftMotor.forward();
-				rightMotor.backward();
-
-				fetchUSData();
-			}
-			leftMotor.stop(true);
-			rightMotor.stop(false);
-
-			angle = odometer.getXYT()[2]; //get current angle
-		} // make the robot parallel to the y axis
-		leftMotor.rotate(convertAngle(Lab5.WHEEL_RAD, Lab5.TRACK, 135 - angle / 2.0), true);
-		rightMotor.rotate(-convertAngle(Lab5.WHEEL_RAD, Lab5.TRACK, 135 - angle / 2.0), false);
-
-		leftMotor.stop(true);
-		rightMotor.stop(false);
-		odometer.setTheta(0);
-
-	}
-
+	
 	private void fetchUSData() {
 		usSensor.fetchSample(usData, 0); // acquire data
 		int new_distance = (int) Math.abs(usData[0] * 100.0); // extract from buffer, cast to int
