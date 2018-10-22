@@ -7,6 +7,9 @@ import lejos.hardware.motor.EV3MediumRegulatedMotor;
 import lejos.hardware.port.Port;
 import lejos.robotics.SampleProvider;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import ca.mcgill.ecse211.odometer.*;
 import lejos.hardware.Button;
 import lejos.hardware.Sound;
@@ -29,6 +32,21 @@ public class ObstacleAvoidance implements Runnable {
 	private Odometer odometer;
 	private OdometerData odoData;
 	private int startCorner = 0;
+	
+	private SampleProvider color_sample_provider;
+	private float[] color_samples;
+	
+	private String searchColor = "Green";
+	private int[] searchColorVal;
+	
+	
+	private Map<String, int[]> colorMap = new HashMap<String, int[]>();
+	private int[] greenRing = {87674, 171025, 21749, 14503, 28462, 2238}; // Rm, Gm,Bm, Rsd, Gsd, Bsd values (times 10^6 for each)
+	private int[] orangeRing = {158635, 53781, 13539, 34160, 10960, 938};
+	private int[] blueRing = {23205, 99814, 88609, 6696, 18489, 9309};
+	private int[] yellowRing = {184826, 126655, 26283, 34951, 24557, 2173};
+	
+	private int redS, greenS, blueS;
 
 	private double[][] wayPoints = new double[][] { { 2 * TILE_WIDTH, 2 * TILE_WIDTH }, // change values for different maps
 			{ 2 * TILE_WIDTH, 6 * TILE_WIDTH },
@@ -56,6 +74,17 @@ public class ObstacleAvoidance implements Runnable {
 		// this instance
 		this.usData = new float[usDistance.sampleSize()]; // usData is the buffer in which data are
 		// returned
+		
+		EV3ColorSensor colour_sensor = new EV3ColorSensor(LocalEV3.get().getPort("S2"));
+		color_sample_provider = colour_sensor.getMode("RGB");
+		color_samples = new float[colour_sensor.sampleSize()];
+		
+		colorMap.put("Green", greenRing);
+		colorMap.put("Orange", orangeRing);
+		colorMap.put("Blue", blueRing);
+		colorMap.put("Yellow", yellowRing);
+		
+		searchColorVal = colorMap.get(searchColor);
 	}
 
 	// run method (required for Thread)
@@ -255,6 +284,20 @@ public class ObstacleAvoidance implements Runnable {
 
 	void detectColour() {
 
+		fetchLightData();
+		
+		// checking if sensor RGB value is greater than 2 standard deviation from mean
+		if (Math.abs(searchColorVal[0] - this.redS) <= (2 * searchColorVal[3]) &&
+			Math.abs(searchColorVal[1] - this.greenS) <= (2 * searchColorVal[4]) &&
+			Math.abs(searchColorVal[2] - this.blueS) <= (2 * searchColorVal[5]))
+		{
+			Sound.beep();
+		}
+		
+		else {
+			Sound.twoBeeps();
+		}
+		
 	}
 
 	void turnTo(double theta) {
@@ -285,7 +328,16 @@ public class ObstacleAvoidance implements Runnable {
 			return false;
 
 	}
-
+	
+	public void fetchLightData() {
+		color_sample_provider.fetchSample(color_samples, 0);
+		this.redS = (int) (color_samples[0] * 1000000);
+		this.greenS = (int) (color_samples[1] * 1000000);
+		this.blueS = (int) (int) (color_samples[2] * 1000000);
+	}
+	
+	
+	
 	private static int convertDistance(double radius, double distance) {
 		return (int) ((180.0 * distance) / (Math.PI * radius));
 	}
