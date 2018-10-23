@@ -157,7 +157,8 @@ public class UltrasonicLocalizer implements Runnable {
 		}
 		leftMotor.rotate(-convertAngle(Lab5.WHEEL_RAD, Lab5.TRACK, 49 + angle / 2.0), true);
 		rightMotor.rotate(convertAngle(Lab5.WHEEL_RAD, Lab5.TRACK, 49 + angle / 2.0), false);
-		odometer.setTheta(19);
+		
+		
 		leftMotor.stop(true);
 		rightMotor.stop();
 	}

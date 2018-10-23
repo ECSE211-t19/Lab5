@@ -43,8 +43,8 @@ public class LightLocalizer implements Runnable {
 		this.leftMotor = leftMotor;
 		this.rightMotor = rightMotor;
 		EV3ColorSensor colour_sensor = Lab5.lineSensor;
-		color_sample_provider = colour_sensor.getMode("Red");
-		color_samples = new float[colour_sensor.sampleSize()];
+		this.color_sample_provider = colour_sensor.getMode("Red");
+		this.color_samples = new float[colour_sensor.sampleSize()];
 		this.TRACK = TRACK;
 		this.WHEEL_RAD = WHEEL_RAD;
 		this.startCorner = startCorner;
@@ -55,7 +55,7 @@ public class LightLocalizer implements Runnable {
 			this.odoData = Odometer.getOdometer();
 		} catch (OdometerExceptions e1) {
 
-			e1.printStackTrace();
+			
 		}
 		// wait
 		try {
@@ -118,7 +118,7 @@ public class LightLocalizer implements Runnable {
 		
 		double[] position = {TILE_WIDTH, TILE_WIDTH, 0};
 		boolean[] set = {true,true,true};
-		odoData.setPosition(position, set);
+		odoData.setPosition(position);
 	}
 
 	/***

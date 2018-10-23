@@ -85,7 +85,7 @@ public class navigation implements Runnable {
 		// initial angle is 0||2pi, same direction as y-axis, going clockwise
 		double differenceInTheta = (dt*180/Math.PI-currentT); // robot has to turn "differenceInTheta",
 		//turn the robot to the desired direction
-		turnTo(differenceInTheta); 
+		turnTo(Math.abs(differenceInTheta)); 
 		
 		// drive forward required distance
 	    leftMotor.setSpeed(FORWARD_SPEED);

@@ -185,14 +185,15 @@ public class Odometer extends OdometerData implements Runnable {
    * @param position
    * @param update
    */
-  public void setPosition(double[] position, boolean[] update) {
+  public void setPosition(double[] position) {
     synchronized (this) {
-      if (update[0])
+    
           X = position[0];
-      if (update[1])
+   
           Y = position[1];
-      if (update[2])
+ 
           Theta = position[2];
+  	odo.update(X, Y, Theta);
     }
   }
 

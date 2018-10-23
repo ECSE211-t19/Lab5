@@ -28,37 +28,44 @@ public class ObstacleAvoidance implements Runnable {
 	double currentT, currentY, currentX;
 	double dx, dy, dt;
 	double distanceToTravel;
-	int iterator = 1;
+	int iterator = 0;
 	private Odometer odometer;
 	private OdometerData odoData;
 	private int startCorner = 0;
 	
 	private SampleProvider color_sample_provider;
+	private float[] colorData;
+	private SampleProvider ring_color_sample_provider;
+	//private static final Port csPort = LocalEV3.get().getPort("S3");
 	private float[] color_samples;
 	
-	private String searchColor = "Green";
+	private final String SEARCHCOLOR = "Orange";
 	private int[] searchColorVal;
 	
 	
 	private Map<String, int[]> colorMap = new HashMap<String, int[]>();
 	private int[] greenRing = {87674, 171025, 21749, 14503, 28462, 2238}; // Rm, Gm,Bm, Rsd, Gsd, Bsd values (times 10^6 for each)
-	private int[] orangeRing = {158635, 53781, 13539, 34160, 10960, 938};
+	private int[] orangeRing = {139123, 44763, 10644, 18797, 8562, 1184};
 	private int[] blueRing = {23205, 99814, 88609, 6696, 18489, 9309};
 	private int[] yellowRing = {184826, 126655, 26283, 34951, 24557, 2173};
 	
 	private int redS, greenS, blueS;
 
-	private double[][] wayPoints = new double[][] { { 2 * TILE_WIDTH, 2 * TILE_WIDTH }, // change values for different maps
-			{ 2 * TILE_WIDTH, 6 * TILE_WIDTH },
-			{ 3 * TILE_WIDTH, 6 * TILE_WIDTH },
-			{ 3 * TILE_WIDTH, 2 * TILE_WIDTH },
-			{ 4 * TILE_WIDTH, 2 * TILE_WIDTH },
-			{ 4 * TILE_WIDTH, 6 * TILE_WIDTH },
-			{ 5 * TILE_WIDTH, 6 * TILE_WIDTH },
-			{ 5 * TILE_WIDTH, 2 * TILE_WIDTH },
-			{ 6 * TILE_WIDTH, 2 * TILE_WIDTH },
-			{ 6 * TILE_WIDTH, 6 * TILE_WIDTH }};
-
+	
+	
+	private double[][] wayPoints = createWayPoints(2,2,5,5);
+	//private double[][]  wayPoints = new double[][]{{2*30.48,2*30.48}, // change values for different maps
+//		  {6*30.48,2*30.48},
+//		  {6*30.48,3*30.48},
+//		  {2*30.48,3*30.48},
+//		  {2*30.48,4*30.48},
+//		  {6*30.48,4*30.48},
+//		  {6*30.48,5*30.48},
+//		  {2*30.48,5*30.48},
+//		  {2*30.48,6*30.48},
+//		  {6*30.48,6*30.48}};		
+	
+			
 	// array list for points
 	public ObstacleAvoidance(EV3LargeRegulatedMotor leftMotor, EV3LargeRegulatedMotor rightMotor, final double TRACK,
 			final double WHEEL_RAD) throws OdometerExceptions { // constructor
@@ -69,22 +76,29 @@ public class ObstacleAvoidance implements Runnable {
 		odoData.setXYT(0, 0, 0);
 		this.TRACK = TRACK;
 		this.WHEEL_RAD = WHEEL_RAD;
+		
 		SensorModes usSensor = Lab5.usSensor; // usSensor is the instance
-		usDistance = usSensor.getMode("Distance"); // usDistance provides samples from
+		this.usDistance = usSensor.getMode("Distance"); // usDistance provides samples from
 		// this instance
 		this.usData = new float[usDistance.sampleSize()]; // usData is the buffer in which data are
 		// returned
 		
-		EV3ColorSensor colour_sensor = new EV3ColorSensor(LocalEV3.get().getPort("S2"));
-		color_sample_provider = colour_sensor.getMode("RGB");
-		color_samples = new float[colour_sensor.sampleSize()];
+		SensorModes lineSensor = Lab5.lineSensor;
+		this.color_sample_provider = lineSensor.getMode("RGB");
+		this.colorData = new float[color_sample_provider.sampleSize()]; // line sensor
+		
+		
+		SensorModes ringSensor = Lab5.ringSensor;
+		this.ring_color_sample_provider = ringSensor.getMode("RGB");
+		this.color_samples = new float[ring_color_sample_provider.sampleSize()]; // ring sensor
+
 		
 		colorMap.put("Green", greenRing);
 		colorMap.put("Orange", orangeRing);
 		colorMap.put("Blue", blueRing);
 		colorMap.put("Yellow", yellowRing);
 		
-		searchColorVal = colorMap.get(searchColor);
+		searchColorVal = colorMap.get(SEARCHCOLOR);
 	}
 
 	// run method (required for Thread)
@@ -100,65 +114,82 @@ public class ObstacleAvoidance implements Runnable {
 			// there is nothing to be done here because it is not expected that
 			// the odometer will be interrupted by another thread
 		}
+		
+		/*
+		while(true)
+		{
+			detectColor();
+			try {
+				Thread.sleep(2000);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		*/
+		
+		
+		
+		
 		// get to start position
-		if (startCorner == 0) {
-			double[] position = { TILE_WIDTH, TILE_WIDTH, 0 };
-			boolean[] set = { true, true, true };
-			odometer.setPosition(position, set);
-
-			dx = wayPoints[0][0] - TILE_WIDTH;
-			turnTo(90);
-			travel(dx);
-			turnTo(-90);
-			dy = wayPoints[0][1] - TILE_WIDTH;
-			travel(dy);
-			double[] position2 = { wayPoints[0][0], wayPoints[0][1], 0 };
-			boolean[] set2 = { true, true, true };
-			odometer.setPosition(position2, set2);
-			leftMotor.stop(true);
-			rightMotor.stop(false);
-		}
-		// bottom right corner
-		else if (startCorner == 1) {
-			double[] position = { 7 * TILE_WIDTH, TILE_WIDTH, 0 };
-			boolean[] set = { true, true, true };
-			odometer.setPosition(position, set);
-
-			dx = odometer.getX() - wayPoints[0][0];
-			System.out.println(dx);
-			turnTo(-90);
-			travel(dx);
-			turnTo(90);
-			travel(wayPoints[0][1]);
-		}
-		// top right corner
-		else if (startCorner == 2) {
-			double[] position = { 7 * TILE_WIDTH, 7 * TILE_WIDTH, 180 };
-			boolean[] set = { true, true, true };
-			odometer.setPosition(position, set);
-
-			// drive one tile further down than the search area so no risk of hitting a ring
-			dy = odometer.getY() - wayPoints[0][1] + TILE_WIDTH;
-			System.out.println(dy);
-			travel(dy);
-			// turn to left wall
-			turnTo(90);
-			dx = odometer.getX() - wayPoints[0][0];
-			travel(dx);
-			// turn to top wall and travel to start point
-			turnTo(90);
-			travel(TILE_WIDTH);
-		} else {
-			double[] position = { TILE_WIDTH, 7 * TILE_WIDTH, 180 };
-			boolean[] set = { true, true, true };
-			odometer.setPosition(position, set);
-			dy = odometer.getY() - wayPoints[0][1];
-			turnTo(-90);
-			dx = wayPoints[0][0] - odometer.getX();
-			travel(dx);
-			turnTo(-90);
-		}
-		Sound.beep();
+//		if (startCorner == 0) {
+//			double[] position = { TILE_WIDTH, TILE_WIDTH, 0 };
+//			boolean[] set = { true, true, true };
+//			odometer.setPosition(position);
+//
+//			dx = wayPoints[0][0] - TILE_WIDTH;
+//			turnTo(90);
+//			travel(dx);
+//			turnTo(-90);
+//			dy = wayPoints[0][1] - TILE_WIDTH;
+//			travel(dy);
+//			double[] position2 = { wayPoints[0][0], wayPoints[0][1], 0 };
+//			boolean[] set2 = { true, true, true };
+//			odometer.setPosition(position2);
+//			leftMotor.stop(true);
+//			rightMotor.stop(false);
+//		}
+//		// bottom right corner
+//		else if (startCorner == 1) {
+//			double[] position = { 7 * TILE_WIDTH, TILE_WIDTH, 0 };
+//			boolean[] set = { true, true, true };
+//			odometer.setPosition(position);
+//
+//			dx = odometer.getX() - wayPoints[0][0];
+//	
+//			turnTo(-90);
+//			travel(dx);
+//			turnTo(90);
+//			travel(wayPoints[0][1]);
+//		}
+//		// top right corner
+//		else if (startCorner == 2) {
+//			double[] position = { 7 * TILE_WIDTH, 7 * TILE_WIDTH, 180 };
+//			boolean[] set = { true, true, true };
+//			odometer.setPosition(position);
+//
+//			// drive one tile further down than the search area so no risk of hitting a ring
+//			dy = odometer.getY() - wayPoints[0][1] + TILE_WIDTH;
+//	
+//			travel(dy);
+//			// turn to left wall
+//			turnTo(90);
+//			dx = odometer.getX() - wayPoints[0][0];
+//			travel(dx);
+//			// turn to top wall and travel to start point
+//			turnTo(90);
+//			travel(TILE_WIDTH);
+//		} else {
+//			double[] position = { TILE_WIDTH, 7 * TILE_WIDTH, 180 };
+//			boolean[] set = { true, true, true };
+//			odometer.setPosition(position);
+//			dy = odometer.getY() - wayPoints[0][1];
+//			turnTo(-90);
+//			dx = wayPoints[0][0] - odometer.getX();
+//			travel(dx);
+//			turnTo(-90);
+//		}
+//		Sound.beep();
 
 		// implemented this for loop so that navigation will work for any number of
 		// points
@@ -167,6 +198,9 @@ public class ObstacleAvoidance implements Runnable {
 			travelTo(wayPoints[iterator][0], wayPoints[iterator][1]);
 			iterator++;
 		}
+		
+		
+		
 	}
 
 	void travel(double distance) {
@@ -179,7 +213,7 @@ public class ObstacleAvoidance implements Runnable {
 	}
 
 	void travelTo(double x, double y) {
-		boolean keepLooking = true;
+		//boolean keepLooking = true;
 		currentX = odometer.getXYT()[0];// get the position on the board
 		currentY = odometer.getXYT()[1];
 		currentT = odometer.getXYT()[2];
@@ -212,10 +246,14 @@ public class ObstacleAvoidance implements Runnable {
 			if (distance <= 10) {
 				leftMotor.stop(true);
 				rightMotor.stop(false);
+				/*
 				if (keepLooking == true) {
-					detectColour();
+					detectColor();
 				}
-
+				*/
+				
+				detectColor();
+				
 				if (odometer.getXYT()[0] < 2.4 * TILE_WIDTH && odometer.getXYT()[0] > 1.3 * TILE_WIDTH
 						&& odometer.getXYT()[1] < 2.5 * TILE_WIDTH && odometer.getXYT()[1] > 1.6 * TILE_WIDTH) {
 					leftMotor.rotate(-convertAngle(WHEEL_RAD, TRACK, 90), true); // turn when facing obstacle and travel
@@ -226,8 +264,8 @@ public class ObstacleAvoidance implements Runnable {
 					rightMotor.rotate(convertDistance(WHEEL_RAD, 20), false);
 					leftMotor.rotate(convertAngle(WHEEL_RAD, TRACK, 90), true);
 					rightMotor.rotate(-convertAngle(WHEEL_RAD, TRACK, 90), false);
-					leftMotor.rotate(convertDistance(WHEEL_RAD, 30), true);
-					rightMotor.rotate(convertDistance(WHEEL_RAD, 30), false);
+					leftMotor.rotate(convertDistance(WHEEL_RAD, 35), true);
+					rightMotor.rotate(convertDistance(WHEEL_RAD, 35), false);
 					leftMotor.rotate(-convertAngle(WHEEL_RAD, TRACK, 90), true);
 					rightMotor.rotate(convertAngle(WHEEL_RAD, TRACK, 90), false);
 					leftMotor.rotate(convertDistance(WHEEL_RAD, 20), true);
@@ -239,8 +277,8 @@ public class ObstacleAvoidance implements Runnable {
 					rightMotor.rotate(convertDistance(WHEEL_RAD, 20), false);
 					leftMotor.rotate(-convertAngle(WHEEL_RAD, TRACK, 90), true);
 					rightMotor.rotate(convertAngle(WHEEL_RAD, TRACK, 90), false);
-					leftMotor.rotate(convertDistance(WHEEL_RAD, 30), true);
-					rightMotor.rotate(convertDistance(WHEEL_RAD, 30), false);
+					leftMotor.rotate(convertDistance(WHEEL_RAD, 35), true);
+					rightMotor.rotate(convertDistance(WHEEL_RAD, 35), false);
 					leftMotor.rotate(-convertAngle(WHEEL_RAD, TRACK, 90), true);
 					rightMotor.rotate(convertAngle(WHEEL_RAD, TRACK, 90), false);
 					leftMotor.rotate(convertDistance(WHEEL_RAD, 20), true);
@@ -282,14 +320,14 @@ public class ObstacleAvoidance implements Runnable {
 		}
 	}
 
-	void detectColour() {
+	void detectColor() {
 
 		fetchLightData();
 		
 		// checking if sensor RGB value is greater than 2 standard deviation from mean
-		if (Math.abs(searchColorVal[0] - this.redS) <= (2 * searchColorVal[3]) &&
-			Math.abs(searchColorVal[1] - this.greenS) <= (2 * searchColorVal[4]) &&
-			Math.abs(searchColorVal[2] - this.blueS) <= (2 * searchColorVal[5]))
+		if (Math.abs(searchColorVal[0] - this.redS) <= (int) (3 * searchColorVal[3]) &&
+			Math.abs(searchColorVal[1] - this.greenS) <= (int) (3 * searchColorVal[4]) &&
+			Math.abs(searchColorVal[2] - this.blueS) <= (int) (3 * searchColorVal[5]))
 		{
 			Sound.beep();
 		}
@@ -330,13 +368,52 @@ public class ObstacleAvoidance implements Runnable {
 	}
 	
 	public void fetchLightData() {
-		color_sample_provider.fetchSample(color_samples, 0);
+		ring_color_sample_provider.fetchSample(color_samples, 0);
 		this.redS = (int) (color_samples[0] * 1000000);
 		this.greenS = (int) (color_samples[1] * 1000000);
-		this.blueS = (int) (int) (color_samples[2] * 1000000);
+		this.blueS = (int) (color_samples[2] * 1000000);
 	}
 	
-	
+
+			
+	public static double[][] createWayPoints (int xl, int yl, int xt, int yt) {
+		
+		double[][] wayPoints = new double[(xt - xl + 1) * 2][2];
+		int j = 0;
+		for (int i = 0; i < 2*(xt - xl + 1); i++)
+		{
+			if ( i % 4 == 1 || i % 4 == 2)
+			{
+				wayPoints[i][0] = (xl + j) * TILE_WIDTH;
+				wayPoints[i][1] = yt * TILE_WIDTH;
+			}
+			
+			else
+			{
+				wayPoints[i][0] = (xl + j) * TILE_WIDTH;
+				wayPoints[i][1] = (yl) * TILE_WIDTH;
+			}
+			
+			
+			if (i % 2 == 1)
+			{
+				j++;
+			}
+			
+			
+			
+		}
+		
+		
+		
+		return wayPoints;
+		
+		
+		
+		
+		
+		
+	}
 	
 	private static int convertDistance(double radius, double distance) {
 		return (int) ((180.0 * distance) / (Math.PI * radius));
