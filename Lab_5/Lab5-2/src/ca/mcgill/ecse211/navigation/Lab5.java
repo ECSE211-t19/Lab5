@@ -2,7 +2,6 @@
 package ca.mcgill.ecse211.navigation;
 
 import ca.mcgill.ecse211.localization.LightLocalizer;
-import ca.mcgill.ecse211.localization.LightLocalization2;
 import ca.mcgill.ecse211.localization.UltrasonicLocalizer;
 import ca.mcgill.ecse211.odometer.*;
 import lejos.hardware.Button;
@@ -26,8 +25,8 @@ public class Lab5 {
 	public static final EV3ColorSensor lineSensor = new EV3ColorSensor(LocalEV3.get().getPort("S2"));
 	public static final EV3ColorSensor ringSensor = new EV3ColorSensor(LocalEV3.get().getPort("S3"));
 	private static final TextLCD lcd = LocalEV3.get().getTextLCD();
-	public static final double WHEEL_RAD = 2.2;
-	public static final double TRACK = 10.2;
+	public static final double WHEEL_RAD = 2.13;
+	public static final double TRACK = 9.66;
 	public Odometer odometer;
 
 	public static void main(String[] args) throws OdometerExceptions {
@@ -42,7 +41,7 @@ public class Lab5 {
 		UltrasonicLocalizer usLocalizer = new UltrasonicLocalizer(leftMotor, rightMotor, TRACK, WHEEL_RAD);
 
 		navigation navigation = new navigation(leftMotor, rightMotor, TRACK, WHEEL_RAD);
-		LightLocalization2 lightLocalizer2 = new LightLocalization2(leftMotor, rightMotor, TRACK, WHEEL_RAD);
+		LightLocalizer lightLocalizer = new LightLocalizer(leftMotor, rightMotor, TRACK, WHEEL_RAD);
 		
 		ObstacleAvoidance obstacleavoidance = new ObstacleAvoidance(leftMotor, rightMotor, TRACK, WHEEL_RAD);
 		
@@ -62,12 +61,12 @@ public class Lab5 {
 			
 			if (buttonChoice == Button.ID_RIGHT) {
 				
-				//usLocalizer.run();
-				//buttonChoice = Button.waitForAnyPress();
-				//lightLocalizer2.run();
-				//Sound.beep();
-				//go to start point
-				//buttonChoice = Button.waitForAnyPress();
+//				usLocalizer.run();
+//				buttonChoice = Button.waitForAnyPress();
+//				lightLocalizer.run();
+//				Sound.beep();
+//				//go to start point
+//				buttonChoice = Button.waitForAnyPress();
 				
 				obstacleavoidance.run(); // run the obstacleAvoidance
 			

@@ -81,7 +81,7 @@ public class UltrasonicLocalizer implements Runnable {
 				fetchUSData();
 			}
 			leftMotor.stop(true);
-			rightMotor.stop();
+			rightMotor.stop(false);
 
 			while (this.distance > WALL_DISTANCE) {
 				leftMotor.setSpeed(ROTATION_SPEED);
@@ -92,7 +92,7 @@ public class UltrasonicLocalizer implements Runnable {
 				fetchUSData();
 			}
 			leftMotor.stop(true);
-			rightMotor.stop();
+			rightMotor.stop(false);
 			odometer.setTheta(0);
 
 			while (this.distance < 100) {
@@ -104,7 +104,7 @@ public class UltrasonicLocalizer implements Runnable {
 				fetchUSData();
 			}
 			leftMotor.stop(true);
-			rightMotor.stop();
+			rightMotor.stop(false);
 
 			while (this.distance > WALL_DISTANCE) {
 				leftMotor.setSpeed(ROTATION_SPEED);
@@ -115,7 +115,7 @@ public class UltrasonicLocalizer implements Runnable {
 				fetchUSData();
 			}
 			leftMotor.stop(true);
-			rightMotor.stop();
+			rightMotor.stop(false);
 
 			angle = odometer.getXYT()[2];
 		} else {// facing away from the walls
@@ -128,7 +128,7 @@ public class UltrasonicLocalizer implements Runnable {
 				fetchUSData();
 			}
 			leftMotor.stop(true);
-			rightMotor.stop();
+			rightMotor.stop(false);
 			odometer.setTheta(0);
 
 			while (this.distance < 100) {
@@ -140,7 +140,7 @@ public class UltrasonicLocalizer implements Runnable {
 				fetchUSData();
 			}
 			leftMotor.stop(true);
-			rightMotor.stop();
+			rightMotor.stop(false);
 
 			while (this.distance > WALL_DISTANCE) {
 				leftMotor.setSpeed(ROTATION_SPEED);
@@ -151,16 +151,17 @@ public class UltrasonicLocalizer implements Runnable {
 				fetchUSData();
 			}
 			leftMotor.stop(true);
-			rightMotor.stop();
+			rightMotor.stop(false);
 
 			angle = odometer.getXYT()[2];
 		}
-		leftMotor.rotate(-convertAngle(Lab5.WHEEL_RAD, Lab5.TRACK, 49 + angle / 2.0), true);
-		rightMotor.rotate(convertAngle(Lab5.WHEEL_RAD, Lab5.TRACK, 49 + angle / 2.0), false);
+		leftMotor.rotate(-convertAngle(Lab5.WHEEL_RAD, Lab5.TRACK, 45 + (angle / 2.0)), true);
+		rightMotor.rotate(convertAngle(Lab5.WHEEL_RAD, Lab5.TRACK, 45 + (angle / 2.0)), false);
 		
 		
 		leftMotor.stop(true);
-		rightMotor.stop();
+		rightMotor.stop(false);
+		odometer.setTheta(0);
 	}
 
 	

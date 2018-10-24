@@ -63,6 +63,11 @@ public class LightLocalizer implements Runnable {
 		} catch (InterruptedException e) {
 
 		}
+		leftMotor.stop(true);
+		rightMotor.stop(false);
+		leftMotor.setSpeed(130);
+		rightMotor.setSpeed(130);
+		
 		do_localization();
 	}
 
@@ -101,24 +106,26 @@ public class LightLocalizer implements Runnable {
 		// Go backwards to the center of the line
 		leftMotor.rotate(convertDistance(WHEEL_RAD, -d), true);
 		rightMotor.rotate(convertDistance(WHEEL_RAD, -d), false);
-		leftMotor.stop(true);
-		rightMotor.stop(false);
+		//leftMotor.stop(true);
+		//rightMotor.stop(false);
 
 		leftMotor.rotate(-convertAngle(WHEEL_RAD, TRACK, 90), true);
 		rightMotor.rotate(convertAngle(WHEEL_RAD, TRACK, 90), false);
 
-		leftMotor.stop(true);
-		rightMotor.stop(false);
+		//leftMotor.stop(true);
+		//rightMotor.stop(false);
 
 		leftMotor.rotate(convertDistance(WHEEL_RAD, -d), true);
 		rightMotor.rotate(convertDistance(WHEEL_RAD, -d), false);
-		leftMotor.stop(true);
-		rightMotor.stop(false);
+		//leftMotor.stop(true);
+		//rightMotor.stop(false);
 		odoData.setTheta(0); // Robot is at the origin
 		
 		double[] position = {TILE_WIDTH, TILE_WIDTH, 0};
-		boolean[] set = {true,true,true};
 		odoData.setPosition(position);
+		
+		odoData.setX(TILE_WIDTH);
+		odoData.setY(TILE_WIDTH);
 	}
 
 	/***

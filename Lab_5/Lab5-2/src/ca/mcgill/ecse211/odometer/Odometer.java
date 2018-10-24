@@ -193,7 +193,7 @@ public class Odometer extends OdometerData implements Runnable {
           Y = position[1];
  
           Theta = position[2];
-  	odo.update(X, Y, Theta);
+          odo.update(X, Y, Theta);
     }
   }
 
